@@ -1,6 +1,8 @@
 /.venv
 /tests
-/_pycache
+/_pycache_
+/.pytest_cache
 *fasta
 *log
 *ipynb
+test*
