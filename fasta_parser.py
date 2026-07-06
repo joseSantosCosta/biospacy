@@ -1,48 +1,63 @@
-def fasta_to_list(fasta):
-    with open(fasta,'r') as f:
-        lines = f.readlines()
-        lines_striped = [line.strip() for line in lines]
-        for line in lines_striped:
-            if line == "":
-                lines_striped.remove(line)
-        
-    return lines_striped
+from dataclasses import dataclass
+from pathlib import Path
+import os
+import logger
+import logging
 
-def remove_descriptions(lines:list):
-    tokenized_fasta = []
-    separated_description = [line.split() for line in lines]
-    # A list of list, where each list is a line
+loggerObj = logging.getLogger(__name__)
+logger.setup_logger()
 
-    for line in separated_description:
-        if line[0].startswith(">"):
-            while len(line) > 1:
-                line.pop()
+@dataclass
+class FastaRecord:
+    seq_id:str
+    description:str
+    sequence:str
+
+    def __str__(self):
+        gc_content = round(100 * (self.sequence.count("G") + self.sequence.count("C")) / len(self.sequence),2) if len(self.sequence) > 0 else 0
+        return f"Sequence id: {self.seq_id} \n Description: {self.description} \n Length of the sequence: {len(self.sequence)} \n GC content(%): {gc_content}"
+
+def fasta_parser(fasta):
+    fasta = Path(fasta)
+    if not fasta.exists():
+        raise FileNotFoundError("The fasta file passed was not found")
     
-    no_description = [line[0] for line in separated_description]
-    return no_description
-
-
-def extract_id_sequence(fasta):
-    id_sequence:dict = {}
-    to_extract = remove_descriptions(fasta_to_list(fasta)) #result of a list where it only has ID's and sequences
-    id = ""
-    sequence = ""
-    for string in to_extract:
-        if string.startswith(">"):
-            id = string
-            id_sequence[id] = ""
-            sequence = ""
+    if os.path.getsize(fasta) == 0:
+        raise ValueError("The file selected is empty")
+    
+    current_id = None
+    current_description = ""
+    current_seq = []
+    with open(fasta,"r") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith(">"):
+                if current_id is not None:
+                    logging.info(f"Creating a FastaRecord object instance for the sequence with id {current_id}")
+                    yield FastaRecord(seq_id=current_id,description=current_description,seq="".join(current_seq))
+                
             
-        else:
-            id_sequence[id] += string
+                parts = line[1:].split(maxsplit=1)
+                current_id = parts[0]
+                current_description = parts[1] if len(parts) > 1 else ""
+                current_seq = []
+            else:
+                current_seq.append(line)
+        
+        sequence = "".join(current_seq).upper()
 
-    for record in id_sequence:
-        id_sequence[record] = [id_sequence[record]] 
-    
-    return id_sequence
-        
-        
-        
+        if not sequence:
+            logging.warning(f"The sequence with id {current_id} is empty")
 
+        yield FastaRecord(
+            seq_id=current_id,
+            description=current_description,
+            sequence=sequence,
+        )
+
+
+            
     
 

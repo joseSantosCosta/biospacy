@@ -1,13 +1,20 @@
 import spacy
+from spacy import util
+from spacy.language import Language
 from spacy.tokens import Doc, DocBin
 from spacy.vocab import Vocab
 from constants import IUPAC
 from logger import setup_logger
 import logging
 import fasta_parser
+from pathlib import Path
 
 loggerObj = logging.getLogger(__name__)
 setup_logger()
+
+Doc.set_extension("sequence_id",default=None)
+Doc.set_extension("record_log",default=None)
+
 
 
 class SequenceTokenizer():
@@ -138,23 +145,48 @@ class SequenceTokenizer():
             loggerObj.debug(f"The sequence was tokenized into {len(tokenized_sequence)} kmers")
         
         return doc  
+    
+    def to_bytes(self):
+        serializers = {
+            "token_mode" : lambda b: str(self.token_mode).encode("utf8"),
+            "k": lambda b: str(self.k).encode("utf8"),
+            "frame" : lambda b : str(self.frame).encode("utf8")
+        }
         
+        return util.to_bytes(serializers)
+ 
+    def from_bytes(self, bytes_data):
+        deserializers = {
+            "token_mode" : lambda b: setattr(self, "token_mode",b.decode("utf8") ),
+            "k": lambda b: setattr(self,"k",int(b.decode("utf8"))),
+            "frame" : lambda b : setattr(self,"frame",int(b.decode("utf8")))
+        }
+
+        util.from_bytes(bytes_data,deserializers)
+        return self
+    
+    def to_disk(self,path):
+        if path == None:
+            raise ValueError("The path provided is none")
+        path = Path(path)
+        if not path.exists():
+            raise ValueError("The path provided does not exist")
+        with open(path,"wb") as f:
+            f.write(self.to_bytes())
+    
+    def from_disk(self,path):
+        if path == None:
+            raise ValueError("The path provided is none")
+        path = Path(path)
+        if not path.exists():
+            raise ValueError("The path provided does not exist")
+        with open(path,"rb") as f:
+            bytes_of_data = f.read()
+            self.from_bytes(bytes_of_data)
+        return self
+    
 
 
-
-
-
-
-            
-
-nlp = spacy.blank("xx")
-vocab = nlp.vocab
-tokenizer = SequenceTokenizer(vocab)
-sequence = "ABCDEFGHI ATACAT"
-
-print("Residue result:",tokenizer._split_residue(sequence))
-print("Codon result:",tokenizer._split_codon(sequence))
-print("Kmer result:",tokenizer._split_kmer(sequence))
 
 
 
