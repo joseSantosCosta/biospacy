@@ -14,6 +14,9 @@ setup_logger()
 
 Doc.set_extension("sequence_id",default=None)
 Doc.set_extension("record_log",default=None)
+Doc.set_extension("token_mode",default=None)
+Doc.set_extension("k",default=None)
+Doc.set_extension("frame",default=None)
 
 
 
@@ -143,6 +146,10 @@ class SequenceTokenizer():
             spaces = [False for token in tokenized_sequence]
             doc = Doc(self.vocab, words=tokenized_sequence,spaces = spaces)
             loggerObj.debug(f"The sequence was tokenized into {len(tokenized_sequence)} kmers")
+
+            doc._.token_mode = self.token_mode
+            doc._.k = self.k
+            doc._.frame = self.frame
         
         return doc  
     
