@@ -1,7 +1,12 @@
 from dataclasses import dataclass
 from spacy.tokens import Span, Doc
 from spacy.matcher import Matcher
-from constants import RESTRICTION_ENZYMES
+from constants import RESTRICTION_ENZYMES, ENZYME_LOOKUP, IUPAC_EXPANSION, STANDARD,IUPAC
+import logging
+import logger
+
+logger.setup_logger()
+loggerObj = logging.getLogger(__name__)
 
 @dataclass
 class MatchResult:
@@ -37,7 +42,7 @@ class BioMatcher:
             rule_name = self.nlp.vocab.strings[match_id]
             start_position = start
             end_position = end
-            matched_sequence = doc[start:end]
+            matched_sequence = doc[start:end].text
             length = len(matched_sequence)
             span = Span(doc,start,end)
 
@@ -58,23 +63,46 @@ class BioMatcher:
         ]
         rule_name = "ORF_PATTERN"
         self.matcher.add(rule_name,[pattern])
+    
         
     def add_restriction_site_rule(self,enzyme):
-        if enzyme not in RESTRICTION_ENZYMES:
-            raise ValueError("The enzyme selected is unknown for the system")
+        enzyme_lower = enzyme.lower()
+        if enzyme_lower not in ENZYME_LOOKUP:
+            raise NameError(f"The enzyme name {enzyme} was not found in the enzyme database")
         
-        pattern = [{"TEXT":RESTRICTION_ENZYMES[enzyme]}]
-        rule_name = f"{enzyme}_pattern"
-        self.matcher.add(rule_name,[pattern])
+        else:
+            enzyme = ENZYME_LOOKUP[enzyme_lower]
+            enzyme_seq = RESTRICTION_ENZYMES[enzyme]
+            pattern = _enzyme_sequence_expansion(enzyme_seq=enzyme_seq)
+            rule_name = f"{enzyme}_pattern"
+            self.matcher.add(rule_name,[pattern])
     
-    def add_homopolymer_rule(self,min_length):
-        pattern = [
-            {"_":{"is_homopolymer":True},"OP":"{min_length}"}
-        ]
 
+    #do I want to match for sequences like AAAANAAA
+    def add_homopolymer_rule(self,min_length,standard_only = True):
+        if min_length <= 1:
+            raise ValueError("The minimum length has to be greater than 1")
+        list_of_patterns = []
+        if standard_only:
+            for n in STANDARD:
+                 list_of_patterns.append([{"TEXT":n}] * min_length + [{"TEXT":n,"OP":"*"}])
+        else:
+            for n in IUPAC:
+                list_of_patterns.append([{"TEXT":n}] * min_length + [{"TEXT":n,"OP":"*"}])
+           
         rule_name = "HOMOPOLYMER_PATTERN"
-        self.matcher.add(rule_name,[pattern])
+        self.matcher.add(rule_name,list_of_patterns)
+        logging.debug(f"A pattern matching rule named {rule_name} was added together with {len(list_of_patterns)} possible patterns")
 
+#helper function to ambiguous nucleotides in the enzyme recognition site sequence
+def _enzyme_sequence_expansion(enzyme_seq,token_mode = "residue"):
+        pattern = []
+        for n in enzyme_seq:
+            if n not in STANDARD:
+                pattern.append({"TEXT":{"IN":IUPAC_EXPANSION[n]}})
+            else:
+                pattern.append({"TEXT":n})
+        return pattern
 
         
 
