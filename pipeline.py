@@ -33,7 +33,7 @@ def run_pipeline(fasta_path,nlp,bio_matcher = None):
             matches = []
         
         yield PipelineResult(record=record,doc=doc,match=matches)
-
+        
 
 
 
