@@ -147,9 +147,9 @@ class SequenceTokenizer():
             doc = Doc(self.vocab, words=tokenized_sequence,spaces = spaces)
             loggerObj.debug(f"The sequence was tokenized into {len(tokenized_sequence)} kmers")
 
-            doc._.token_mode = self.token_mode
-            doc._.k = self.k
-            doc._.frame = self.frame
+        doc._.token_mode = self.token_mode
+        doc._.k = self.k
+        doc._.frame = self.frame
         
         return doc  
     

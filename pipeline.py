@@ -9,12 +9,12 @@ from dataclasses import dataclass
 class PipelineResult:
     record: FastaRecord
     doc: Doc
-    match : list
+    matches : list
 
 
 nlp = spacy.blank("xx")
 
-def buil_pipeline(token_mode,k=3,frame=0):
+def build_pipeline(token_mode,k=3,frame=0):
     nlp = spacy.blank("xx")
     tokenizer = SequenceTokenizer(vocab= nlp.vocab, token_mode= token_mode, k=k, frame=frame)
     nlp.tokenizer = tokenizer
@@ -32,8 +32,8 @@ def run_pipeline(fasta_path,nlp,bio_matcher = None):
         else:
             matches = []
         
-        yield PipelineResult(record=record,doc=doc,match=matches)
-        
+        yield PipelineResult(record=record,doc=doc,matches=matches)
+
 
 
 
