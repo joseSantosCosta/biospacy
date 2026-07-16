@@ -7,26 +7,36 @@ import constants
 def is_purine(token):
     if not isinstance(token,Token):
         raise TypeError("The object passed is not a token object")
+    if len(token) > 1:
+        raise ValueError("Cannot verify if it is a purine for tokens with length higher than 1")
     return token.text in constants.PURINE
 
 def is_pyrimidine(token):
     if not isinstance(token,Token):
         raise TypeError("The object passed is not a token object")
+    if len(token) > 1:
+        raise ValueError("Cannot verify if it is a pyrimidine for tokens with length higher than 1")
     return token.text in constants.PYRIMIDINE
 
 def is_standard(token):
     if not isinstance(token,Token):
         raise TypeError("The object passed is not a token object")
+    if len(token) > 1:
+        raise ValueError("Cannot verify if it is a standard nucleotide for tokens with length higher than 1")
     return token.text in constants.STANDARD
 
 def is_ambiguous(token):
     if not isinstance(token,Token):
         raise TypeError("The object passed is not a token object")
+    if len(token) > 1:
+        raise ValueError("Cannot verify if it is an ambiguous nucleotide for tokens with length higher than 1")
     return not token.text in constants.STANDARD and not token.text in constants.INVALID 
 
 def is_invalid(token):
     if not isinstance(token,Token):
         raise TypeError("The object passed is not a token object")
+    if len(token) > 1:
+        raise ValueError("Cannot verify if it is an invalid nucleotide for tokens with length higher than 1")
     return token.text in constants.INVALID
 
 

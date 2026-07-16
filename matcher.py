@@ -63,6 +63,7 @@ class BioMatcher:
         ]
         rule_name = "ORF_PATTERN"
         self.matcher.add(rule_name,[pattern])
+        logging.debug("A pattern to recognise open reading frames was added")
     
         
     def add_restriction_site_rule(self,enzyme):
@@ -76,9 +77,9 @@ class BioMatcher:
             pattern = _enzyme_sequence_expansion(enzyme_seq=enzyme_seq)
             rule_name = f"{enzyme}_pattern"
             self.matcher.add(rule_name,[pattern])
+            logging.debug(f"A pattern to for the restriction site of {enzyme} was added with the name {rule_name}")
     
 
-    #do I want to match for sequences like AAAANAAA
     def add_homopolymer_rule(self,min_length,standard_only = True):
         if min_length <= 1:
             raise ValueError("The minimum length has to be greater than 1")
@@ -94,8 +95,7 @@ class BioMatcher:
         self.matcher.add(rule_name,list_of_patterns)
         logging.debug(f"A pattern matching rule named {rule_name} was added together with {len(list_of_patterns)} possible patterns")
 
-#helper function to ambiguous nucleotides in the enzyme recognition site sequence
-def _enzyme_sequence_expansion(enzyme_seq,token_mode = "residue"):
+def _enzyme_sequence_expansion(enzyme_seq):
         pattern = []
         for n in enzyme_seq:
             if n not in STANDARD:
